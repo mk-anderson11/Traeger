@@ -4,17 +4,32 @@ from scipy.integrate import odeint
 import csv
 
 def traeger(X, t, fanSpeed):
+
     XO2 = X # Oxygen mass in grill [lb]
 
-    rO2 = 1.0         # Rate of reaction/combustion O2 [lb/hr]
-    m_air = 5.         # Flowrate of air (flowrate in and out through flue) [lb/hr]
-    X_O2_in = 0.21    # Mass fraction of O2 in air
-    m_grill = 10.      # Mass of air in grill [lb]
+
+
+    # Rate of combustion of wood --- estimated from what traeger experts say on forums
+    rWood = -1.0       # [lb/hr]
+
+    # Rate of combustion of O2, H2O, CO2 based off of stoichiometry w/ wood
+    rO2 = 1.3786 * rWood         # [lb/hr]
+    rCO2 = -1.8381 * rWood        # [lb/hr]
+    rH2O = -0.5405 * rWood        # [lb/hr]
+
+    # Air composition
+    X_O2_in = 0.21        # Mass fraction of O2 in air
+    X_N2_in = 1 - X_O2_in # Mass fraction of N2 in air
+    m_grill = 10.         # Mass of air in grill [lb]
+
+    # Dependent on fan speed
+    m_air = 8.*fanSpeed     # Flowrate of air (flowrate in and out through flue) [lb/hr]
+
+    # Dependent on combustion
+    m_flue = 5.             # Flowrate of flue vapor [lb/hr]
 
     # Calculate the dXO2dt
-    dXO2dt = (1/m_grill) * (m_air * (X_O2_in - XO2) - rO2)
-    # print("XO2 = ", XO2)
-    # print(dXO2dt)
+    dXO2dt = (1/m_grill) * (m_air * (X_O2_in - XO2) + rO2)
 
     return dXO2dt
 
