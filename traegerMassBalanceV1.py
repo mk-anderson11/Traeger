@@ -20,7 +20,7 @@ mw[0] = 0.0705		# O2
 mw[1] = 0.0617		# N2
 mw[2] = 0.0970		# CO2
 mw[3] = 0.0397		# H2O
-mw[4] = 1.6887		# Volatiles	
+mw[4] = 1.6887		# Volatiles
 mw[5] = 1.6887		# Wood (C32H46O21)
 mw[6] = 0.0636		# Air
 
@@ -32,7 +32,7 @@ h_f[2] = -3844.964
 h_f[3] = -5775.724
 h_f[4] = 2278.0
 h_f[5] = -2278.0
-h_f[6] = 0		
+h_f[6] = 0
 
 # Constant heat capacities (BTU/(lb*F))
 Cp = np.zeros(7)
@@ -40,7 +40,7 @@ Cp[0] = 0.2195		# O2
 Cp[1] = 0.2484		# N2
 Cp[2] = 0.2016		# CO2
 Cp[3] = 0.4705		# H2O
-Cp[4] = 0.4777		# Volatiles (guess)	
+Cp[4] = 0.4777		# Volatiles (guess)
 Cp[5] = 4.2008		# Wood (at 600F)
 Cp[6] = 0.2412		# Air
 
@@ -50,10 +50,10 @@ rho[0] = 0.0892		# O2
 rho[1] = 0.0727		# N2
 rho[2] = 0.1150		# CO2
 rho[3] = 0.0480		# H2O
-rho[4] = 0.4777		# Volatiles (guess)	
-rho[5] = 70.757		# Wood 
-rho[6] = 0.0752		# Air		
-		
+rho[4] = 0.4777		# Volatiles (guess)
+rho[5] = 70.757		# Wood
+rho[6] = 0.0752		# Air
+
 # Stoichiometry
 x = np.zeros(5)
 x[0] = -33			# O2    ****(Was originally -31)
@@ -64,66 +64,74 @@ x[4] = -1			# Volatiles		(added a negative sign)
 
 # Moved from parameters
 V_air_in = 1		# Change this to correctly be utilized
-T_amb = 70			# F		
+T_amb = 70			# F
 
 M = np.zeros(6)
 M[0] # O2
 M[1] # N2
 M[2] # CO2
 M[3] # H2O
-M[4] # Volatiles	
-M[5] # Wood (C32H46O21)	
- 
+M[4] # Volatiles
+M[5] # Wood (C32H46O21)
+
+counter = 0
 
 def traeger(X, t, fanSpeed):
 
-    XO2 =  X[0] # Oxygen mass fraction in grill
-    XN2 =  X[1] # Nitrogen mass fraction in grill
-    XCO2 = X[2] # Carbon Dioxide mass fraction in grill
-    XH2O = X[3] # Water Vapor mass fraction in grill
-    Temp = X[4]
+	XO2 =  X[0] # Oxygen mass fraction in grill
+	XN2 =  X[1] # Nitrogen mass fraction in grill
+	XCO2 = X[2] # Carbon Dioxide mass fraction in grill
+	XH2O = X[3] # Water Vapor mass fraction in grill
+	Temp = X[4]
 
     # Rate of combustion of wood --- estimated from what traeger experts say on forums
-    rWood = -1/200       # [lb/hr]
+	rWood = -1/200       # [lb/hr]
 
     # Rate of combustion of O2, H2O, CO2 based off of stoichiometry w/ wood
-    rO2 = 1.3786 * rWood         # [lb/hr]
-    rCO2 = -1.8381 * rWood        # [lb/hr]
-    rH2O = -0.5405 * rWood        # [lb/hr]
+	rO2 = 1.3786 * rWood         # [lb/hr]
+	rCO2 = -1.8381 * rWood        # [lb/hr]
+	rH2O = -0.5405 * rWood        # [lb/hr]
 
     # Air composition
-    X_O2_in = 0.21        # Mass fraction of O2 in air
-    X_N2_in = 1 - X_O2_in # Mass fraction of N2 in air
-    m_grill = 1.         # Mass of air in grill [lb]
+	X_O2_in = 0.21        # Mass fraction of O2 in air
+	X_N2_in = 1 - X_O2_in # Mass fraction of N2 in air
+	m_grill = 1.         # Mass of air in grill [lb]
 
     # Dependent on fan speed
-    m_air = 20 * fanSpeed     # Flowrate of air (flowrate in and out through flue) [lb/hr]
+	m_air = 20 * fanSpeed     # Flowrate of air (flowrate in and out through flue) [lb/hr]
 
     # Dependent on combustion
-    m_flue = m_air + (-rWood)      # Flowrate of flue vapor [lb/hr]
+	m_flue = m_air + (-rWood)      # Flowrate of flue vapor [lb/hr]
 
     # Calculate the dXO2dt
     # dXO2dt = (1/m_grill) * (m_air * (X_O2_in - XO2) + rO2)
-    dXO2dt  = (1/m_grill)*(X_O2_in*m_air - XO2*m_flue + rO2)
-    dXN2dt  = (1/m_grill)*(X_N2_in*m_air - XN2*m_flue)
-    dXCO2dt = (1/m_grill)*(-XCO2*m_flue + rCO2)
-    dXH2Odt = (1/m_grill)*(-XH2O*m_flue + rH2O)
-	
+	dXO2dt  = (1/m_grill)*(X_O2_in*m_air - XO2*m_flue + rO2)
+	dXN2dt  = (1/m_grill)*(X_N2_in*m_air - XN2*m_flue)
+	dXCO2dt = (1/m_grill)*(-XCO2*m_flue + rCO2)
+	dXH2Odt = (1/m_grill)*(-XH2O*m_flue + rH2O)
+
     #Intermediate Values for Energy Balance
 
-    Cp_flue = XO2 * Cp[0] + XN2 * Cp[1] + XCO2 * Cp[2] + XH2O * Cp[3]  #Heat Capacity of flue gas
-	
+	Cp_flue = XO2 * Cp[0] + XN2 * Cp[1] + XCO2 * Cp[2] + XH2O * Cp[3]  #Heat Capacity of flue gas
+
     #Enthalpy of inlet (weighted with mass fractions)
-    h_in_air  = (X_O2_in * h_f[1] + X_N2_in * h_f[2]) + (X_O2_in * Cp[1] + X_N2_in * Cp[2]) * (T_amb-Tref)
-    h_in_wood = h_f[5] + Cp[5] * (T_amb-Tref)
-    h_in_tot  = h_in_air * m_air + h_in_wood * (-rWood)
-    
+	h_in_air  = (X_O2_in * h_f[1] + X_N2_in * h_f[2]) + (X_O2_in * Cp[1] + X_N2_in * Cp[2]) * (T_amb-Tref)
+	h_in_wood = h_f[5] + Cp[5] * (T_amb-Tref)
+	h_in_tot  = h_in_air * m_air + h_in_wood * (-rWood)
+
     #Enthalpy of outlet
-    h_out = XO2 * h_f[0] + XN2 * h_f[1] + XCO2 * h_f[2] + XH2O * h_f[3] + Cp_flue * (Temp - Tref)
+	h_out = (XO2 * h_f[0] + XN2 * h_f[1] + XCO2 * h_f[2] + XH2O * h_f[3] + Cp_flue * (Temp - Tref)) * m_flue
     #Energy Balance
-    dTdt = (-h_in_tot + m_flue * h_out) * (1 / m_grill) * (1 / Cp_flue)  
+	dTdt = (h_in_tot - h_out) * (1 / m_grill) * (1 / Cp_flue)
     #print Cp_flue
-    return [dXO2dt, dXN2dt, dXCO2dt, dXH2Odt, dTdt]
+
+	# Error checking
+
+	print("h_in_air = ", h_in_air)
+	print("dTdt = ", dTdt)
+
+
+	return [dXO2dt, dXN2dt, dXCO2dt, dXH2Odt, dTdt]
 
 # Initial conditions
 XO2_0 = 0.3   # Mass fraction
